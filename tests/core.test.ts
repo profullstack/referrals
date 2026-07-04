@@ -104,6 +104,15 @@ describe("applyReferral", () => {
     expect(usage.affiliateId).toBe("affiliate1");
     expect(store.usages).toHaveLength(1);
   });
+
+  it("throws when the code owner applies their own code", async () => {
+    const code: ReferralCode = { code: "SELF1234", ownerId: "affiliate1", createdAt: new Date(), expiresAt: null };
+    const store = makeStore([code]);
+    await expect(
+      applyReferral({ code: "SELF1234", newUserId: "affiliate1", amountCents: 5000, store })
+    ).rejects.toThrow();
+    expect(store.usages).toHaveLength(0);
+  });
 });
 
 describe("createCode", () => {

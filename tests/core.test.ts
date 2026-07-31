@@ -144,3 +144,34 @@ describe("extractCode", () => {
     expect(extractCode("https://example.com/?r=CUSTOM", "r")).toBe("CUSTOM");
   });
 });
+
+import { extendCodeExpiration, getReferralStats } from "../src/core.js";
+
+describe("extendCodeExpiration", () => {
+  it("updates expiration date on existing code", async () => {
+    const store = makeStore([{ code: "EXP123", ownerId: "u1", createdAt: new Date(), expiresAt: new Date(1000) }]);
+    const newDate = new Date(2000000000000);
+    const updated = await extendCodeExpiration("EXP123", store, newDate);
+    expect(updated.expiresAt).toEqual(newDate);
+    expect((await store.getCode("EXP123"))?.expiresAt).toEqual(newDate);
+  });
+
+  it("throws when code does not exist", async () => {
+    const store = makeStore();
+    await expect(extendCodeExpiration("MISSING", store, new Date())).rejects.toThrow("Referral code not found");
+  });
+});
+
+describe("getReferralStats", () => {
+  it("aggregates total revenue, commissions, and discounts for a code", async () => {
+    const store = makeStore([{ code: "PROMO88", ownerId: "aff1", createdAt: new Date(), expiresAt: null }]);
+    await applyReferral({ code: "PROMO88", newUserId: "u1", amountCents: 10000, store });
+    await applyReferral({ code: "PROMO88", newUserId: "u2", amountCents: 20000, store });
+
+    const stats = await getReferralStats("PROMO88", store);
+    expect(stats.totalUsages).toBe(2);
+    expect(stats.totalRevenueCents).toBe(30000);
+    expect(stats.totalCommissionCents).toBe(18000);
+    expect(stats.totalDiscountCents).toBe(6000);
+  });
+});

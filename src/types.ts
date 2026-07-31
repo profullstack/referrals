@@ -36,6 +36,14 @@ export interface ReferralCalculation {
   split: ReferralSplit;
 }
 
+export interface ReferralStats {
+  code: string;
+  totalUsages: number;
+  totalRevenueCents: number;
+  totalCommissionCents: number;
+  totalDiscountCents: number;
+}
+
 export interface ReferralStore {
   /** Persist a referral code. */
   saveCode(code: ReferralCode): Promise<void>;
@@ -45,4 +53,6 @@ export interface ReferralStore {
   saveUsage(usage: ReferralUsage): Promise<void>;
   /** Fetch all usages for a given affiliate. */
   getUsagesByAffiliate(affiliateId: string): Promise<ReferralUsage[]>;
+  /** Fetch all usages for a specific referral code. */
+  getUsagesByCode?(code: string): Promise<ReferralUsage[]>;
 }

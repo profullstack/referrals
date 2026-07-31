@@ -7,6 +7,13 @@ export interface ReferralSplit {
   total: number;
 }
 
+export interface ReferralTier {
+  /** Minimum number of usage redemptions required to unlock this tier */
+  minUsages: number;
+  /** Custom split for this tier */
+  split: ReferralSplit;
+}
+
 export interface ReferralCode {
   code: string;
   ownerId: string;

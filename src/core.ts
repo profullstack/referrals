@@ -41,6 +41,21 @@ export function calculateReferral(
 }
 
 /**
+ * Calculate referral commission based on cumulative usage count tiers.
+ * Evaluates the highest matching tier for the given usage count.
+ */
+export function calculateTieredReferral(
+  amountCents: number,
+  usageCount: number,
+  tiers: import("./types.js").ReferralTier[] = []
+): ReferralCalculation {
+  const sorted = [...tiers].sort((a, b) => b.minUsages - a.minUsages);
+  const matched = sorted.find((t) => usageCount >= t.minUsages);
+  const effectiveSplit = matched ? matched.split : DEFAULT_SPLIT;
+  return calculateReferral(amountCents, effectiveSplit);
+}
+
+/**
  * Validate that a code exists and hasn't expired.
  * Returns the code record or null.
  */

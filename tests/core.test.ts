@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   generateCode,
   calculateReferral,
+  calculateTieredReferral,
   validateCode,
   applyReferral,
   createCode,
@@ -60,6 +61,29 @@ describe("calculateReferral", () => {
     const calc = calculateReferral(10000, { affiliate: 0.5, customer: 0.1, total: 0.6 });
     expect(calc.commissionCents).toBe(5000);
     expect(calc.discountCents).toBe(1000);
+  });
+});
+
+describe("calculateTieredReferral", () => {
+  const tiers = [
+    { minUsages: 0, split: { affiliate: 0.5, customer: 0.1, total: 0.6 } },
+    { minUsages: 10, split: { affiliate: 0.7, customer: 0.1, total: 0.8 } },
+    { minUsages: 50, split: { affiliate: 0.8, customer: 0.1, total: 0.9 } },
+  ];
+
+  it("applies base tier when usage count is low", () => {
+    const calc = calculateTieredReferral(10000, 5, tiers);
+    expect(calc.commissionCents).toBe(5000);
+  });
+
+  it("applies higher tier when usage count reaches threshold", () => {
+    const calc = calculateTieredReferral(10000, 15, tiers);
+    expect(calc.commissionCents).toBe(7000);
+  });
+
+  it("applies top tier when usage count exceeds highest threshold", () => {
+    const calc = calculateTieredReferral(10000, 100, tiers);
+    expect(calc.commissionCents).toBe(8000);
   });
 });
 

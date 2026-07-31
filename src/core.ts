@@ -52,6 +52,10 @@ export async function validateCode(
   const record = await store.getCode(code.toUpperCase().trim());
   if (!record) return null;
   if (record.expiresAt && record.expiresAt < now) return null;
+  if (record.maxUses !== undefined && record.maxUses !== null) {
+    const currentUses = record.currentUses ?? 0;
+    if (currentUses >= record.maxUses) return null;
+  }
   return record;
 }
 
@@ -92,15 +96,17 @@ export async function applyReferral(
 export async function createCode(
   ownerId: string,
   store: ReferralStore,
-  opts: { prefix?: string; length?: number; expiresAt?: Date | null } = {}
+  opts: { prefix?: string; length?: number; expiresAt?: Date | null; maxUses?: number | null } = {}
 ): Promise<ReferralCode> {
-  const { prefix, length, expiresAt = null } = opts;
+  const { prefix, length, expiresAt = null, maxUses = null } = opts;
   const code = generateCode(ownerId, { prefix, length });
   const record: ReferralCode = {
     code,
     ownerId,
     createdAt: new Date(),
     expiresAt,
+    maxUses,
+    currentUses: 0,
   };
   await store.saveCode(record);
   return record;

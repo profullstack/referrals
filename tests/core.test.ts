@@ -144,3 +144,27 @@ describe("extractCode", () => {
     expect(extractCode("https://example.com/?r=CUSTOM", "r")).toBe("CUSTOM");
   });
 });
+
+describe("maxUses limit validation", () => {
+  it("rejects code when currentUses reaches maxUses limit", async () => {
+    const store = makeStore();
+    const codeRecord = await createCode("aff_1", store, { maxUses: 2 });
+    codeRecord.currentUses = 2;
+    await store.saveCode(codeRecord);
+
+    const valid = await validateCode(codeRecord.code, store);
+    expect(valid).toBeNull();
+  });
+
+  it("allows code when currentUses is below maxUses limit", async () => {
+    const store = makeStore();
+    const codeRecord = await createCode("aff_1", store, { maxUses: 5 });
+    codeRecord.currentUses = 3;
+    await store.saveCode(codeRecord);
+
+    const valid = await validateCode(codeRecord.code, store);
+    expect(valid).not.toBeNull();
+    expect(valid?.code).toBe(codeRecord.code);
+  });
+});
+

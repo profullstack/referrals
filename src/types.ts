@@ -13,6 +13,10 @@ export interface ReferralCode {
   createdAt: Date;
   /** ISO-8601 date string if the code expires; null means no expiry */
   expiresAt: Date | null;
+  /** Optional maximum number of redemptions allowed; null or undefined means unlimited */
+  maxUses?: number | null;
+  /** Current number of redemptions recorded */
+  currentUses?: number;
 }
 
 export interface ReferralUsage {

@@ -72,6 +72,10 @@ export async function applyReferral(
   const record = await validateCode(code, store);
   if (!record) throw new Error(`Invalid or expired referral code: ${code}`);
 
+  if (record.ownerId === newUserId) {
+    throw new Error(`Self-referral is not allowed: user ${newUserId} owns referral code ${record.code}`);
+  }
+
   const calc = calculateReferral(amountCents, split);
   const usage: ReferralUsage = {
     code: record.code,

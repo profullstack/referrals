@@ -95,6 +95,14 @@ describe("applyReferral", () => {
     await expect(applyReferral({ code: "BAD", newUserId: "u2", amountCents: 1000, store })).rejects.toThrow();
   });
 
+  it("throws on self-referral", async () => {
+    const code: ReferralCode = { code: "SELF1234", ownerId: "user1", createdAt: new Date(), expiresAt: null };
+    const store = makeStore([code]);
+    await expect(
+      applyReferral({ code: "SELF1234", newUserId: "user1", amountCents: 5000, store })
+    ).rejects.toThrow("Self-referral is not allowed");
+  });
+
   it("persists usage with correct amounts", async () => {
     const code: ReferralCode = { code: "GOOD1234", ownerId: "affiliate1", createdAt: new Date(), expiresAt: null };
     const store = makeStore([code]);

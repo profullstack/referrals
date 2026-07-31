@@ -104,6 +104,15 @@ describe("applyReferral", () => {
     expect(usage.affiliateId).toBe("affiliate1");
     expect(store.usages).toHaveLength(1);
   });
+
+  it("uses custom split override configured directly on ReferralCode", async () => {
+    const customSplit = { affiliate: 0.8, customer: 0.1, total: 0.9 };
+    const code: ReferralCode = { code: "VIP80", ownerId: "vip_aff", createdAt: new Date(), expiresAt: null, split: customSplit };
+    const store = makeStore([code]);
+    const usage = await applyReferral({ code: "VIP80", newUserId: "newuser", amountCents: 10000, store });
+    expect(usage.commissionCents).toBe(8000);
+    expect(usage.discountCents).toBe(1000);
+  });
 });
 
 describe("createCode", () => {

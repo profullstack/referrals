@@ -121,8 +121,9 @@ export function trackReferralCode(
 ): Response & { cookies: { set(name: string, value: string, opts?: object): void } } {
   const { param = "ref", cookieName = "referral_code", maxAgeSeconds = 60 * 60 * 24 * 30 } = opts;
   const code = request.nextUrl.searchParams.get(param);
-  // URL param wins; only set if not already tracked
-  if (code) {
+  const alreadyTracked = request.cookies.get(cookieName)?.value;
+  // URL param wins only if not already tracked (first-touch attribution)
+  if (code && !alreadyTracked) {
     response.cookies.set(cookieName, code, {
       httpOnly: false, // readable by client JS for prefill
       sameSite: "lax",

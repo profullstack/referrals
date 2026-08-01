@@ -72,7 +72,8 @@ export async function applyReferral(
   const record = await validateCode(code, store);
   if (!record) throw new Error(`Invalid or expired referral code: ${code}`);
 
-  const calc = calculateReferral(amountCents, split);
+  const effectiveSplit = opts.split ?? record.split ?? DEFAULT_SPLIT;
+  const calc = calculateReferral(amountCents, effectiveSplit);
   const usage: ReferralUsage = {
     code: record.code,
     affiliateId: record.ownerId,
@@ -92,15 +93,16 @@ export async function applyReferral(
 export async function createCode(
   ownerId: string,
   store: ReferralStore,
-  opts: { prefix?: string; length?: number; expiresAt?: Date | null } = {}
+  opts: { prefix?: string; length?: number; expiresAt?: Date | null; split?: ReferralSplit } = {}
 ): Promise<ReferralCode> {
-  const { prefix, length, expiresAt = null } = opts;
+  const { prefix, length, expiresAt = null, split } = opts;
   const code = generateCode(ownerId, { prefix, length });
   const record: ReferralCode = {
     code,
     ownerId,
     createdAt: new Date(),
     expiresAt,
+    ...(split ? { split } : {}),
   };
   await store.saveCode(record);
   return record;

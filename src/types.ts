@@ -13,6 +13,8 @@ export interface ReferralCode {
   createdAt: Date;
   /** ISO-8601 date string if the code expires; null means no expiry */
   expiresAt: Date | null;
+  /** Optional custom referral split override for this code */
+  split?: ReferralSplit;
 }
 
 export interface ReferralUsage {

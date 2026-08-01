@@ -1,4 +1,4 @@
-import type { ReferralCalculation, ReferralCode, ReferralSplit, ReferralStore, ReferralUsage } from "./types.js";
+import type { ReferralCalculation, ReferralCode, ReferralSplit, ReferralStats, ReferralStore, ReferralUsage } from "./types.js";
 
 export const DEFAULT_SPLIT: ReferralSplit = {
   affiliate: 0.6,
@@ -134,4 +134,62 @@ export function extractCode(
   const val = source[param];
   if (!val) return null;
   return Array.isArray(val) ? (val[0] ?? null) : val;
+}
+
+/**
+ * Extend or modify the expiration date of an existing referral code.
+ */
+export async function extendCodeExpiration(
+  code: string,
+  store: ReferralStore,
+  newExpiresAt: Date | null
+): Promise<ReferralCode> {
+  const normalized = code.toUpperCase().trim();
+  const existing = await store.getCode(normalized);
+  if (!existing) throw new Error(`Referral code not found: ${code}`);
+
+  const updated: ReferralCode = {
+    ...existing,
+    expiresAt: newExpiresAt,
+  };
+  await store.saveCode(updated);
+  return updated;
+}
+
+/**
+ * Compute performance analytics and totals for a given referral code.
+ */
+export async function getReferralStats(
+  code: string,
+  store: ReferralStore
+): Promise<ReferralStats> {
+  const normalized = code.toUpperCase().trim();
+  const record = await store.getCode(normalized);
+  if (!record) throw new Error(`Referral code not found: ${code}`);
+
+  let usages: ReferralUsage[] = [];
+  if (store.getUsagesByCode) {
+    usages = await store.getUsagesByCode(normalized);
+  } else {
+    const allAffiliateUsages = await store.getUsagesByAffiliate(record.ownerId);
+    usages = allAffiliateUsages.filter(
+      (u) => u.code.toUpperCase().trim() === normalized
+    );
+  }
+
+  const stats: ReferralStats = {
+    code: record.code,
+    totalUsages: usages.length,
+    totalRevenueCents: 0,
+    totalCommissionCents: 0,
+    totalDiscountCents: 0,
+  };
+
+  for (const u of usages) {
+    stats.totalRevenueCents += u.amountCents;
+    stats.totalCommissionCents += u.commissionCents;
+    stats.totalDiscountCents += u.discountCents;
+  }
+
+  return stats;
 }
